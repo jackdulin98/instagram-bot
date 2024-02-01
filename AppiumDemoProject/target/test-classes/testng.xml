@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite name="Testing Google Apps">
+    <test name="Regression">
+         <classes>
+             <class name="tests.BaseClass"/>
+          </classes>
+     </test> <!-- Test -->
+</suite> <!-- Suite -->
