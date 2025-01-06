@@ -231,14 +231,26 @@ public class InstagramBot {
 		}
 		*/
 		
+		// refresher: how to overwrite a value inside of a file
+		// for now, assume the file only has the run number (and nothing else)
+		String runNoTracker = System.getProperty("user.dir") + File.separator + "supporting-files" + File.separator + "runNum.txt";
+		File runNoTrackerFile = new File(runNoTracker);
+		FileWriter runNoTrackerWriter = new FileWriter(runNoTrackerFile);
+		Scanner sc = new Scanner(runNoTrackerFile);
+		int runNumber = Integer.parseInt(sc.nextLine());
+		
 		int numberOfUsersToCheck = 100;				// will be bold and do 100 users for this batch (!!!)
-		int runNumber = 4; 							// TODO: make this number automatic, don't need to think about it
 		try {
 			unfollowUsers(driver, numberOfUsersToCheck, runNumber);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 		
+		// write the new run number back into the file, then we can start again
+		// TODO: check for when one of the "jobs" can stop running, say if one of them returns less than 100 users (telltale sign) => edge cases
+		runNumber++;
+		runNoTrackerWriter.write(String.valueOf(runNumber));
+		runNoTrackerWriter.close();
 		
 		// TODO: Get the automatic mouse scroll to keep the computer on for scrollStories(). 
 		// TODO: It eventually led to someone's live story. How to avoid it?
@@ -887,25 +899,33 @@ public class InstagramBot {
 		// TODO: Get Appium to forge the request headers, avoid getting banned. 
 		// Also, don't repeat this commented code too much (especially when logged in already). 
 		// Only follow these steps on the first run.
-		/*
+		
+		// check for the existence of a certain element: if that element doesn't exist, open up the user's account
+		try {
+			WebDriverWait waitForFollowerLink = new WebDriverWait(driver, 5);
+			MobileElement followersButton = waitForFollowerLink.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("com.instagram.android:id/row_profile_header_textview_followers_count"))));
+		} catch(TimeoutException e) {
 			driver.findElement(By.xpath("//android.widget.FrameLayout[@content-desc=\"Search and explore\"]/android.widget.ImageView")).click();
-			Thread.sleep(3000);
-			MobileElement searchBar = driver.findElement(By.id("com.instagram.android:id/action_bar_search_edit_text"));
+			WebDriverWait waitForSearchBar = new WebDriverWait(driver, 3);
+			MobileElement searchBar = waitForSearchBar.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("com.instagram.android:id/action_bar_search_edit_text"))));
 			searchBar.click();
-			Thread.sleep(2000);
-			searchBar = driver.findElement(By.id("com.instagram.android:id/action_bar_search_edit_text"));
+			WebDriverWait waitForSearchBarEditText = new WebDriverWait(driver, 2);
+			searchBar = waitForSearchBarEditText.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("com.instagram.android:id/action_bar_search_edit_text"))));
 			searchBar.sendKeys("lmtlss.fit" + "\n");
 			
-			Thread.sleep(3000);
+			WebDriverWait waitForUsername = new WebDriverWait(driver, 3);
+			MobileElement userName = waitForUserName.until(ExpectedConditions.visibilityOf(driver.findElement(By.xpath("//android.widget.TextView[@resource-id=\"com.instagram.android:id/row_search_user_username\" and @text=\"lmtlss.fit\"]"))));
 			// TODO: it's been made into a more dynamic xpath, now make it customizable for any username.
-			// PROBLEM: The element could no longer be located.
-			driver.findElement(By.xpath("//android.widget.TextView[@resource-id=\"com.instagram.android:id/row_search_user_username\" and @text=\"lmtlss.fit\"]")).click();
+			userName.click();
 			Thread.sleep(5000);
-		*/
-		MobileElement followersButton = driver.findElement(By.id("com.instagram.android:id/row_profile_header_textview_followers_count"));
-		followersButton.click();
-		Thread.sleep(5000);
+			waitForFollowerLink = new WebDriverWait(driver, 5);
+			followersButton = waitForFollowerLink.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("com.instagram.android:id/row_profile_header_textview_followers_count"))));
+			// look for the followers button
+		} finally {
+			followersButton.click();
+		}
 		
+		Thread.sleep(5000);
 		
 		// take the top n entries from the database, and then loop through them using the ResultSet object
 		// determine whether that user actually follows him back or not (through the filtered list)
